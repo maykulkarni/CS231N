@@ -80,12 +80,12 @@ def svm_loss_vectorized(W, X, y, reg):
   #############################################################################
   num_rows = X.shape[0]
   scores = X.dot(W)
-  mask = scores[np.arange(num_rows), y] - 1
-  scores = scores - mask.reshape(-1, 1)
-  scores[np.arange(num_rows), y] -= 1
-  scores[scores < 0] = 0
-  loss = np.sum(scores)
+  correct_class_score = scores[np.arange(num_rows), y]
+  margins = np.maximum(0, scores - correct_class_score[:, np.newaxis] + 1)
+  margins[np.arange(num_rows), y] = 0
+  loss = np.sum(margins)
   loss /= num_rows
+  loss += reg*np.sum(W*W)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -100,7 +100,15 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
-  pass
+  X_mask = np.zeros(margins.shape)
+  # erroneous samples
+  X_mask[margins > 0] = 1
+  # for every sample find the counts where number of classes where margin > 0
+  incorrect_count = np.sum(X_mask, axis=1) # sums across columns
+  X_mask[np.arange(num_rows), y] = -1 * incorrect_count
+  dW = X.T.dot(X_mask)
+  dW /= num_rows
+  dW += reg*W
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
