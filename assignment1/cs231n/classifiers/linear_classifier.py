@@ -10,8 +10,6 @@ class LinearClassifier(object):
 
   def __init__(self):
     self.W = None
-    self.learning_rate = None
-    self.reg = None
 
   def train(self, X, y, learning_rate=1e-3, reg=1e-5, num_iters=100,
             batch_size=200, verbose=False):
@@ -32,8 +30,6 @@ class LinearClassifier(object):
     Outputs:
     A list containing the value of the loss function at each training iteration.
     """
-    self.learning_rate = learning_rate
-    self.reg = reg
     num_train, dim = X.shape
     num_classes = np.max(y) + 1 # assume y takes values 0...K-1 where K is number of classes
     if self.W is None:
