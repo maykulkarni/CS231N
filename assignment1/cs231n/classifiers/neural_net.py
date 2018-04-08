@@ -45,9 +45,10 @@ class TwoLayerNet(object):
       return np.maximum(np.zeros_like(input), input)
 
   def softmax(self, input):
-      normalized_logits = input - np.max(input)
-      logits_sum = np.sum(np.exp(normalized_logits), axis=1)
-      probabilities = np.exp(normalized_logits) / logits_sum.reshape(-1, 1)
+      # normalize to avoid stability issues
+      normalized_logits = input - np.max(input, axis=1, keepdims=True)
+      logits_sum = np.sum(np.exp(normalized_logits), axis=1, keepdims=True)
+      probabilities = np.exp(normalized_logits) / logits_sum
       return probabilities
 
   def loss(self, X, y=None, reg=0.0):
@@ -109,8 +110,9 @@ class TwoLayerNet(object):
     output = self.softmax(scores)
     loss = -np.log(output[np.arange(num_train), y])
     loss = np.sum(loss)
-    loss /= num_train
-    loss += 0.5 * reg * (np.sum(W2*W2) + np.sum(W1*W1))
+    data_loss = loss/num_train
+    reg_loss = 0.5 * reg * np.sum(W1 * W1) + 0.5 * reg * np.sum(W2 * W2)
+    loss = data_loss + reg_loss
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -121,8 +123,28 @@ class TwoLayerNet(object):
     # TODO: Compute the backward pass, computing the derivatives of the weights #
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
-    #############################################################################
-    pass
+    # #############################################################################
+    # dW1 = np.zeros_like(W1)
+    # dW2 = np.zeros_like(W2)
+    # db1 = np.zeros_like(W1.shape[1])
+    # db2 = np.zeros_like(W2.shape[1])
+
+    dscores = np.copy(output)
+    dscores[np.arange(num_train), y] -= 1
+    
+    dW2 = a1.T.dot(dscores)
+    dW2 /= num_train
+
+    db2 = np.sum(dscores, axis=0)
+    db2 /= num_train
+
+    dW2 += reg * W2 # don't regularize biases
+
+    # grads["W1"] = dW1
+    grads["W2"] = dW2
+    grads["b2"] = db2
+
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
