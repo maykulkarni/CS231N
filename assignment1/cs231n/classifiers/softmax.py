@@ -31,19 +31,31 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
+  def softmax_prob(normalized_logits, normalized_logits_sum, class_number):
+      numerator = np.exp(normalized_logits[class_number])
+      activation = numerator / normalized_logits_sum
+      return activation
+
   y_pred = X.dot(W)
   for i in range(num_train):
-      current_sample = y_pred[i]
-      current_sample -= np.max(current_sample)
-      correct_class_label = y[i]
-      numerator = np.exp(current_sample[correct_class_label])
-      denominator = np.sum(np.exp(current_sample))
-      loss += -np.log(numerator / denominator)
-      # print(loss)
+      normalized_current_sample = y_pred[i] - np.max(y_pred[i])
+      normalized_current_sample_sum = np.sum(np.exp(normalized_current_sample))
+      softmax_prob_current_sample = softmax_prob(normalized_current_sample,
+                                                 normalized_current_sample_sum,
+                                                 y[i])
+      loss += -np.log(softmax_prob_current_sample) # cross entropy
+      for j in range(num_classes):
+          softmax_prob_current_j = softmax_prob(normalized_current_sample,
+                                                normalized_current_sample_sum,
+                                                j)
+          dW[:, j] += (softmax_prob_current_j - (j == y[i])) * X[i]
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
   loss /= num_train
+  loss += 0.5 * reg * np.sum(W*W)
+
+  dW /= num_train
   return loss, dW
 
 
