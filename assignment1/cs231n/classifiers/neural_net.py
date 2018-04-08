@@ -41,6 +41,15 @@ class TwoLayerNet(object):
     self.params['W2'] = std * np.random.randn(hidden_size, output_size)
     self.params['b2'] = np.zeros(output_size)
 
+  def relu(self, input):
+      return np.maximum(np.zeros_like(input), input)
+
+  def softmax(self, input):
+      normalized_logits = input - np.max(input)
+      logits_sum = np.sum(np.exp(normalized_logits), axis=1)
+      probabilities = np.exp(normalized_logits) / logits_sum.reshape(-1, 1)
+      return probabilities
+
   def loss(self, X, y=None, reg=0.0):
     """
     Compute the loss and gradients for a two layer fully connected neural
@@ -76,11 +85,14 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+    z1 = X.dot(W1) + b1
+    a1 = self.relu(z1)
+    z2 = a1.dot(W2) + b2
+    scores = z2
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
-    
+
     # If the targets are not given then jump out, we're done
     if y is None:
       return scores
@@ -93,7 +105,12 @@ class TwoLayerNet(object):
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
-    pass
+    num_train = X.shape[0]
+    output = self.softmax(scores)
+    loss = -np.log(output[np.arange(num_train), y])
+    loss = np.sum(loss)
+    loss /= num_train
+    loss += 0.5 * reg * (np.sum(W2*W2) + np.sum(W1*W1))
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -215,5 +232,3 @@ class TwoLayerNet(object):
     ###########################################################################
 
     return y_pred
-
-
