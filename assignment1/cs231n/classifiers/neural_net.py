@@ -131,18 +131,29 @@ class TwoLayerNet(object):
 
     dscores = np.copy(output)
     dscores[np.arange(num_train), y] -= 1
-    
+
     dW2 = a1.T.dot(dscores)
     dW2 /= num_train
 
-    db2 = np.sum(dscores, axis=0)
+    db2 = np.sum(dscores, axis=0, keepdims=True)
     db2 /= num_train
 
     dW2 += reg * W2 # don't regularize biases
 
+    dhidden = a1.T.dot(dscores)
+    dhidden[a1 < 0] = 0 # gradient of ReLU
+    dW1 = X.T.dot(dhidden)
+    dW1 /= num_train
+    dW1 += reg * W1
+
+    db1 = np.sum(dhidden, axis=0, keepdims=True)
+    db1 /= num_train
+
     # grads["W1"] = dW1
     grads["W2"] = dW2
     grads["b2"] = db2
+    grads["W1"] = dW1
+    grads["b1"] = db1
 
 
     #############################################################################
