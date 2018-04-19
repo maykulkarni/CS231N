@@ -87,7 +87,7 @@ class TwoLayerNet(object):
         # TODO: Implement the forward pass for the two-layer net, computing the    #
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
-        out1, cache = affine_forward(X, W1, b1)
+        out1, cache = affine_relu_forward(X, W1, b1)
         out2, cache = affine_forward(out1, W2, b2)
         scores = out2
         ############################################################################
@@ -111,6 +111,7 @@ class TwoLayerNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         loss, dloss = softmax_loss(scores, y)
+
         loss += (0.5 * reg * np.sum(W2*W2)) + (0.5 * reg * np.sum(W1*W1))
         ############################################################################
         #                             END OF YOUR CODE                             #
