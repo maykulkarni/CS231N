@@ -172,7 +172,7 @@ class FullyConnectedNet(object):
         self.num_layers = 1 + len(hidden_dims)
         self.dtype = dtype
         self.params = {}
-
+        self.cache = {}
         ############################################################################
         # TODO: Initialize the parameters of the network, storing all values in    #
         # the self.params dictionary. Store weights and biases for the first layer #
@@ -236,6 +236,9 @@ class FullyConnectedNet(object):
             self.params[k] = v.astype(dtype)
 
 
+    def get_W_b(self, index):
+        return self.params["W" + str(index)], self.params["b" + str(index)]
+
     def loss(self, X, y=None):
         """
         Compute loss and gradient for the fully-connected net.
@@ -267,11 +270,16 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
         previous_a = X
+        last_layer = self.num_layers - 1
         for layers in range(1, self.num_layers):
-            W = self.params["W" + str(layers)]
-            b = self.params["b" + str(layers)]
-            result, cache = affine_relu_forward(previous_a, W, b)
+            W, b = self.get_W_b(layers)
+            if layers == last_layer:
+                result, cache = affine_forward(previous_a, W, b)
+            else:
+                result, cache = affine_relu_forward(previous_a, W, b)
+            self.cache[layers] = cache
             previous_a = result
+
         scores = result
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -281,7 +289,7 @@ class FullyConnectedNet(object):
         if mode == 'test':
             return scores
 
-        loss, grads = 0.0, {}
+        loss, grads, reg = 0.0, {}, self.reg
         ############################################################################
         # TODO: Implement the backward pass for the fully-connected net. Store the #
         # loss in the loss variable and gradients in the grads dictionary. Compute #
@@ -295,10 +303,22 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
+
         loss, dscores = softmax_loss(scores, y)
-        upper_layer_gradient = dscores
+        num_train = X.shape[0]
         for layers in reversed(range(1, self.num_layers)):
-            pass
+            if layers == last_layer:
+                da, dw, db = affine_backward(dscores, self.cache[last_layer])
+            else:
+                da, dw, db = affine_relu_backward(upper_layer_gradient,
+                                                  self.cache[layers])
+            dw /= num_train
+            db /= num_train
+            dw += self.reg * self.params["W" + str(layers)]
+            grads["W" + str(layers)] = dw
+            grads["b" + str(layers)] = db
+            upper_layer_gradient = da
+            loss += 0.5 * self.reg * np.sum(self.params["W" + str(layers)]**2)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
