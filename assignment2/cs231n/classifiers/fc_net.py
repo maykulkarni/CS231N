@@ -266,7 +266,13 @@ class FullyConnectedNet(object):
         # self.bn_params[1] to the forward pass for the second batch normalization #
         # layer, etc.                                                              #
         ############################################################################
-        pass
+        previous_a = X
+        for layers in range(1, self.num_layers):
+            W = self.params["W" + str(layers)]
+            b = self.params["b" + str(layers)]
+            result = previous_a.dot(W) + b
+            previous_a = result
+        scores = result
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -289,7 +295,8 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        pass
+        loss, dscores = softmax_loss(scores, y)
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
