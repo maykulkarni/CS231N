@@ -270,7 +270,7 @@ class FullyConnectedNet(object):
         for layers in range(1, self.num_layers):
             W = self.params["W" + str(layers)]
             b = self.params["b" + str(layers)]
-            result = previous_a.dot(W) + b
+            result, cache = affine_relu_forward(previous_a, W, b)
             previous_a = result
         scores = result
         ############################################################################
@@ -296,7 +296,9 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         loss, dscores = softmax_loss(scores, y)
-        
+        upper_layer_gradient = dscores
+        for layers in reversed(range(1, self.num_layers)):
+            pass
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
