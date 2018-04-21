@@ -185,7 +185,30 @@ class FullyConnectedNet(object):
         # beta2, etc. Scale parameters should be initialized to one and shift      #
         # parameters should be initialized to zero.                                #
         ############################################################################
-        pass
+        previous_layer_size = input_dim
+        for index, hidden_layer_size in enumerate(hidden_dims):
+            curr_layer_size = hidden_layer_size
+            # initialize all parameters
+            curr_layer_weight_str = "W" + str(index + 1)
+            curr_layer_bias_str = "b" + str(index + 1)
+            curr_layer_gamma_str = "gamma" + str(index + 1)
+            curr_layer_beta_str = "beta" + str(index + 1)
+
+            curr_layer_bias = np.zeros(curr_layer_size)
+            curr_layer_weights = np.random.normal(scale=weight_scale,
+                                                  size=(previous_layer_size,
+                                                        curr_layer_size))
+            curr_layer_gamma = np.ones(num_classes)
+            curr_layer_beta = np.zeros(num_classes)
+
+            # save all parameters in dict
+            self.params[curr_layer_weight_str] = curr_layer_weights
+            self.params[curr_layer_bias_str] = curr_layer_bias
+            self.params[curr_layer_gamma_str] = curr_layer_gamma
+            # self.params[curr_layer_beta_str] = curr_layer_beta
+
+            # move ahead one index
+            previous_layer_size = curr_layer_size
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
