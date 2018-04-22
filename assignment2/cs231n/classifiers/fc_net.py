@@ -204,7 +204,7 @@ class FullyConnectedNet(object):
             # save all parameters in dict
             self.params[curr_layer_weight_str] = curr_layer_weights
             self.params[curr_layer_bias_str] = curr_layer_bias
-            self.params[curr_layer_gamma_str] = curr_layer_gamma
+            # self.params[curr_layer_gamma_str] = curr_layer_gamma
             # self.params[curr_layer_beta_str] = curr_layer_beta
 
             # move ahead one index
@@ -303,17 +303,15 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-
         loss, dscores = softmax_loss(scores, y)
         num_train = X.shape[0]
+        upper_layer_gradient = dscores
         for layers in reversed(range(1, self.num_layers)):
             if layers == last_layer:
-                da, dw, db = affine_backward(dscores, self.cache[last_layer])
+                da, dw, db = affine_backward(dscores, self.cache[layers])
             else:
                 da, dw, db = affine_relu_backward(upper_layer_gradient,
                                                   self.cache[layers])
-            dw /= num_train
-            db /= num_train
             dw += self.reg * self.params["W" + str(layers)]
             grads["W" + str(layers)] = dw
             grads["b" + str(layers)] = db
