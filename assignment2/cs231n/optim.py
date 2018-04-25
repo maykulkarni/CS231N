@@ -97,16 +97,21 @@ def rmsprop(x, dx, config=None):
     config.setdefault('cache', np.zeros_like(x))
 
     next_x = None
+    cache = config["cache"]
+    eps = config["epsilon"]
+    decay = config["decay_rate"]
+    alpha = config["learning_rate"]
     ###########################################################################
     # TODO: Implement the RMSprop update formula, storing the next value of x #
     # in the next_x variable. Don't forget to update cache value stored in    #
     # config['cache'].                                                        #
     ###########################################################################
-    pass
+    cache = decay * cache + (1 - decay) * dx**2
+    next_x = x - alpha * (1 / (np.sqrt(cache) + eps)) * dx
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-
+    config["cache"] = cache
     return next_x, config
 
 
@@ -134,14 +139,36 @@ def adam(x, dx, config=None):
     config.setdefault('t', 1)
 
     next_x = None
+    m = config["m"]
+    v = config["v"]
+    t = config["t"]
+    beta1 = config["beta1"]
+    beta2 = config["beta2"]
+    learning_rate = config["learning_rate"]
+    eps = config["epsilon"]
     ###########################################################################
     # TODO: Implement the Adam update formula, storing the next value of x in #
     # the next_x variable. Don't forget to update the m, v, and t variables   #
     # stored in config.                                                       #
     ###########################################################################
-    pass
+    t += 1
+
+    m = (beta1 * m) + (1 - beta1) * dx        # running counter of dx
+    v = (beta2 * v) + (1 - beta2) * (dx**2)    # running counter of dx**2
+    m_norm = m / (1 - beta1**t)                     # bias correction since m and v
+    v_norm = v / (1 - beta2**t)                     # will be pretty high in the beginning
+
+    # finally RMSProp style update
+    next_x = x - learning_rate * m_norm / (np.sqrt(v_norm) + eps)
+    # m = beta1*m + (1-beta1)*dx
+    # mt = m / (1-beta1**t)
+    # v = beta2*v + (1-beta2)*(dx**2)
+    # vt = v / (1-beta2**t)
+    # next_x = x - learning_rate * mt / (np.sqrt(vt) + eps)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-
+    config["m"] = m
+    config["v"] = v
+    config["t"] = t
     return next_x, config
