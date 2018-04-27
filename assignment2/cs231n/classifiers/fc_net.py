@@ -204,8 +204,8 @@ class FullyConnectedNet(object):
             # save all parameters in dict
             self.params[curr_layer_weight_str] = curr_layer_weights
             self.params[curr_layer_bias_str] = curr_layer_bias
-            # self.params[curr_layer_gamma_str] = curr_layer_gamma
-            # self.params[curr_layer_beta_str] = curr_layer_beta
+            self.params[curr_layer_gamma_str] = curr_layer_gamma
+            self.params[curr_layer_beta_str] = curr_layer_beta
 
             # move ahead one index
             previous_layer_size = curr_layer_size
@@ -277,6 +277,8 @@ class FullyConnectedNet(object):
                 result, cache = affine_forward(previous_a, W, b)
             else:
                 result, cache = affine_relu_forward(previous_a, W, b)
+                if self.use_dropout:
+                    result, cache = dropout_forward(result, self.dropout_param)
             self.cache[layers] = cache
             previous_a = result
 
@@ -312,6 +314,9 @@ class FullyConnectedNet(object):
             else:
                 da, dw, db = affine_relu_backward(upper_layer_gradient,
                                                   self.cache[layers])
+                if self.use_dropout:
+                    da = dropout_backward(da, self.cache[layers])
+
             dw += self.reg * self.params["W" + str(layers)]
             grads["W" + str(layers)] = dw
             grads["b" + str(layers)] = db
