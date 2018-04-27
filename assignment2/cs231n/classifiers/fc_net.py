@@ -198,14 +198,14 @@ class FullyConnectedNet(object):
             curr_layer_weights = np.random.normal(scale=weight_scale,
                                                   size=(previous_layer_size,
                                                         curr_layer_size))
-            curr_layer_gamma = np.ones(num_classes)
-            curr_layer_beta = np.zeros(num_classes)
+            # curr_layer_gamma = np.ones(num_classes)
+            # curr_layer_beta = np.zeros(num_classes)
 
             # save all parameters in dict
             self.params[curr_layer_weight_str] = curr_layer_weights
             self.params[curr_layer_bias_str] = curr_layer_bias
-            self.params[curr_layer_gamma_str] = curr_layer_gamma
-            self.params[curr_layer_beta_str] = curr_layer_beta
+            # self.params[curr_layer_gamma_str] = curr_layer_gamma
+            # self.params[curr_layer_beta_str] = curr_layer_beta
 
             # move ahead one index
             previous_layer_size = curr_layer_size
@@ -273,13 +273,16 @@ class FullyConnectedNet(object):
         last_layer = self.num_layers - 1
         for layers in range(1, self.num_layers):
             W, b = self.get_W_b(layers)
+            layer_cache = {}
             if layers == last_layer:
                 result, cache = affine_forward(previous_a, W, b)
             else:
                 result, cache = affine_relu_forward(previous_a, W, b)
                 if self.use_dropout:
-                    result, cache = dropout_forward(result, self.dropout_param)
-            self.cache[layers] = cache
+                    result, cache_dropout = dropout_forward(result, self.dropout_param)
+                    layer_cache["dropout"] = cache_dropout
+            layer_cache["fc"] = cache
+            self.cache[layers] = layer_cache
             previous_a = result
 
         scores = result
@@ -309,14 +312,15 @@ class FullyConnectedNet(object):
         num_train = X.shape[0]
         upper_layer_gradient = dscores
         for layers in reversed(range(1, self.num_layers)):
+            layer_cache = self.cache[layers]
             if layers == last_layer:
-                da, dw, db = affine_backward(dscores, self.cache[layers])
+                da, dw, db = affine_backward(dscores, layer_cache["fc"])
             else:
-                da, dw, db = affine_relu_backward(upper_layer_gradient,
-                                                  self.cache[layers])
                 if self.use_dropout:
-                    da = dropout_backward(da, self.cache[layers])
-
+                    upper_layer_gradient = dropout_backward(upper_layer_gradient,
+                                                            layer_cache["dropout"])
+                da, dw, db = affine_relu_backward(upper_layer_gradient,
+                                                  layer_cache["fc"])
             dw += self.reg * self.params["W" + str(layers)]
             grads["W" + str(layers)] = dw
             grads["b" + str(layers)] = db
