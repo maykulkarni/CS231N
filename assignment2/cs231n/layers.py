@@ -441,11 +441,36 @@ def conv_forward_naive(x, w, b, conv_param):
     - cache: (x, w, b, conv_param)
     """
     out = None
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    stride = conv_param["stride"]
+    pad = conv_param["pad"]
+    W2 = int((W - WW + 2*pad) / stride) + 1 # resulting convolution width
+    H2 = int((H - HH + 2*pad) / stride) + 1 # resulting convolution height
+    out = np.zeros((N, F, H2, W2))
     ###########################################################################
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    for curr_image_index in range(N):
+        curr_image = x[curr_image_index]
+        curr_image = np.pad(curr_image, pad, "constant", constant_values = 0)
+        for curr_filter3D_index in range(F):
+            curr_filter3D = w[curr_filter3D_index]
+            for channel_index in range(C):
+                curr_filter = curr_filter3D[channel_index]
+                conv_start_W, conv_start_H = 0, 0
+                conv_end_W, conv_end_H = WW, HH
+                for i in range(H2):
+                    for j in range(W2):
+                        sub_image = curr_image[channel_index][conv_start_W:conv_end_W, conv_start_H:conv_end_H]
+                        print(conv_start_W, conv_start_H)
+                        print(conv_end_W, conv_end_H)
+                        out[curr_image_index][curr_filter3D_index][i][j] += np.sum(sub_image * curr_filter) + b[curr_filter3D_index]
+                        conv_start_W += stride
+                        conv_start_H += stride
+                        conv_end_W += stride
+                        conv_end_H += stride
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
