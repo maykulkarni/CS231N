@@ -282,7 +282,6 @@ class FullyConnectedNet(object):
         ############################################################################
         previous_a = X
         last_layer = self.num_layers
-        # print("LL " + str(last_layer))
         for layers in range(1, last_layer + 1):
             # print(layers)
             W, b, gamma, beta = self.get_layer_params(layers)
