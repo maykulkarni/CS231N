@@ -187,6 +187,7 @@ class FullyConnectedNet(object):
         ############################################################################
         hidden_dims.append(num_classes) # add last layer to the list
         previous_layer_size = input_dim
+        last_layer = len(hidden_dims) - 1
         for index, hidden_layer_size in enumerate(hidden_dims):
             curr_layer_size = hidden_layer_size
             # initialize all parameters
@@ -199,14 +200,15 @@ class FullyConnectedNet(object):
             curr_layer_weights = np.random.normal(scale=weight_scale,
                                                   size=(previous_layer_size,
                                                         curr_layer_size))
-            # curr_layer_gamma = np.ones(num_classes)
-            # curr_layer_beta = np.zeros(num_classes)
+            curr_layer_gamma = np.ones(curr_layer_size)
+            curr_layer_beta = np.zeros(curr_layer_size)
 
             # save all parameters in dict
             self.params[curr_layer_weight_str] = curr_layer_weights
             self.params[curr_layer_bias_str] = curr_layer_bias
-            # self.params[curr_layer_gamma_str] = curr_layer_gamma
-            # self.params[curr_layer_beta_str] = curr_layer_beta
+            if self.use_batchnorm and index < last_layer:
+                self.params[curr_layer_gamma_str] = curr_layer_gamma
+                self.params[curr_layer_beta_str] = curr_layer_beta
 
             # move ahead one index
             previous_layer_size = curr_layer_size
@@ -238,8 +240,15 @@ class FullyConnectedNet(object):
             self.params[k] = v.astype(dtype)
 
 
-    def get_W_b(self, index):
-        return self.params["W" + str(index)], self.params["b" + str(index)]
+    def get_layer_params(self, index):
+        W = self.params["W" + str(index)]
+        b = self.params["b" + str(index)]
+        gamma_str = "gamma{}".format(index)
+        beta_str = "beta{}".format(index)
+        gamma = self.params[gamma_str] if gamma_str in self.params else None
+        beta = self.params[beta_str] if beta_str in self.params else None
+        return W, b, gamma, beta
+
 
     def loss(self, X, y=None):
         """
@@ -276,12 +285,16 @@ class FullyConnectedNet(object):
         # print("LL " + str(last_layer))
         for layers in range(1, last_layer + 1):
             # print(layers)
-            W, b = self.get_W_b(layers)
+            W, b, gamma, beta = self.get_layer_params(layers)
             layer_cache = {}
             if layers == last_layer:
                 result, cache = affine_forward(previous_a, W, b)
             else:
                 result, cache = affine_relu_forward(previous_a, W, b)
+                if self.use_batchnorm:
+                    result, batchnorm_cache = batchnorm_forward(result, gamma,
+                                                beta, self.bn_params[layers - 1])
+                    layer_cache["batchnorm"] = batchnorm_cache
                 if self.use_dropout:
                     result, cache_dropout = dropout_forward(result, self.dropout_param)
                     layer_cache["dropout"] = cache_dropout
@@ -324,7 +337,13 @@ class FullyConnectedNet(object):
             else:
                 if self.use_dropout:
                     upper_layer_gradient = dropout_backward(upper_layer_gradient,
-                                                            layer_cache["dropout"])
+                                                        layer_cache["dropout"])
+                if self.use_batchnorm:
+                    upper_layer_gradient, dgamma, dbeta = \
+                                        batchnorm_backward(upper_layer_gradient,
+                                                       layer_cache["batchnorm"])
+                    grads["gamma" + str(layers)] = dgamma
+                    grads["beta" + str(layers)] = dbeta
                 da, dw, db = affine_relu_backward(upper_layer_gradient,
                                                   layer_cache["fc"])
             dw += self.reg * self.params["W" + str(layers)]

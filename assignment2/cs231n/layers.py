@@ -178,8 +178,6 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # variance, storing your result in the running_mean and running_var   #
         # variables.                                                          #
         #######################################################################
-        N, D = x.shape
-
         #step1: calculate mean
         mu = 1./N * np.sum(x, axis = 0)
 
@@ -220,7 +218,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
-        out = gamma * (x - running_mean) / np.sqrt(running_var) + beta
+        out = gamma * (x - running_mean) / np.sqrt(running_var + eps) + beta
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
