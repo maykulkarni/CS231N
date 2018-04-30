@@ -185,6 +185,7 @@ class FullyConnectedNet(object):
         # beta2, etc. Scale parameters should be initialized to one and shift      #
         # parameters should be initialized to zero.                                #
         ############################################################################
+        hidden_dims.append(num_classes) # add last layer to the list
         previous_layer_size = input_dim
         for index, hidden_layer_size in enumerate(hidden_dims):
             curr_layer_size = hidden_layer_size
@@ -209,6 +210,7 @@ class FullyConnectedNet(object):
 
             # move ahead one index
             previous_layer_size = curr_layer_size
+        # print(self.params.keys())
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -270,8 +272,10 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
         previous_a = X
-        last_layer = self.num_layers - 1
-        for layers in range(1, self.num_layers):
+        last_layer = self.num_layers
+        # print("LL " + str(last_layer))
+        for layers in range(1, last_layer + 1):
+            # print(layers)
             W, b = self.get_W_b(layers)
             layer_cache = {}
             if layers == last_layer:
@@ -284,8 +288,8 @@ class FullyConnectedNet(object):
             layer_cache["fc"] = cache
             self.cache[layers] = layer_cache
             previous_a = result
-
         scores = result
+        # print("Scores shape: {}".format(scores.shape))
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -309,12 +313,14 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         loss, dscores = softmax_loss(scores, y)
+        # print(loss)
         num_train = X.shape[0]
         upper_layer_gradient = dscores
-        for layers in reversed(range(1, self.num_layers)):
+        for layers in reversed(range(1, last_layer + 1)):
             layer_cache = self.cache[layers]
             if layers == last_layer:
-                da, dw, db = affine_backward(dscores, layer_cache["fc"])
+                da, dw, db = affine_backward(upper_layer_gradient,
+                                             layer_cache["fc"])
             else:
                 if self.use_dropout:
                     upper_layer_gradient = dropout_backward(upper_layer_gradient,
