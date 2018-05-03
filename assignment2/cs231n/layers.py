@@ -445,8 +445,8 @@ def conv_forward_naive(x, w, b, conv_param):
     F, C, HH, WW = w.shape
     stride = conv_param["stride"]
     pad = conv_param["pad"]
-    W2 = int((W - WW + 2*pad) / stride) + 1 # resulting convolution width
-    H2 = int((H - HH + 2*pad) / stride) + 1 # resulting convolution height
+    W2 = int((W - WW + 2 * pad) / stride) + 1 # resulting convolution width
+    H2 = int((H - HH + 2 * pad) / stride) + 1 # resulting convolution height
     out = np.zeros((N, F, H2, W2))
     ###########################################################################
     # TODO: Implement the convolutional forward pass.                         #
@@ -455,29 +455,27 @@ def conv_forward_naive(x, w, b, conv_param):
 
     for curr_image_index in range(N):
         curr_image = x[curr_image_index]
-        curr_image = np.pad(curr_image, ((0, 0), (pad, pad), (pad, pad)), "constant", constant_values = 0)
-        # print(curr_image)
+        curr_image = np.pad(curr_image, ((0, 0), (pad, pad), (pad, pad)),
+                            "constant", constant_values = 0)
         for curr_filter3D_index in range(F):
             curr_filter3D = w[curr_filter3D_index]
             for channel_index in range(C):
                 curr_filter = curr_filter3D[channel_index]
-                # print(curr_filter)
                 conv_start_W, conv_start_H = 0, 0
                 conv_end_W, conv_end_H = WW, HH
                 for i in range(H2):
                     conv_start_W, conv_end_W = 0, WW
                     for j in range(W2):
-                        sub_image = curr_image[channel_index][conv_start_W:conv_end_W, conv_start_H:conv_end_H]
-                        # print(conv_start_W, conv_end_W)
-                        # print(conv_start_H, conv_end_H)
-                        # print("*" * 100)
-                        out[curr_image_index][curr_filter3D_index][i][j] += np.sum(sub_image * curr_filter)
+                        sub_image = \
+                            curr_image[channel_index][conv_start_W:conv_end_W,
+                                                      conv_start_H:conv_end_H]
+                        out[curr_image_index][curr_filter3D_index][i][j] += \
+                            np.sum(sub_image * curr_filter)
                         conv_start_W += stride
                         conv_end_W += stride
                     conv_start_H += stride
                     conv_end_H += stride
             out[curr_image_index][curr_filter3D_index] += b[curr_filter3D_index]
-    # print(np.transpose(out, axes=(0, 1, 3, 2)))
     out = np.transpose(out, axes=(0, 1, 3, 2))
     ###########################################################################
     #                             END OF YOUR CODE                            #
